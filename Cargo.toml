@@ -1,0 +1,17 @@
+[package]
+name = "video_serve"
+version = "0.1.0"
+authors = ["还不如一只猪威武 <liamxin@yeah.net>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+actix-web = "3"
+serde = "1.0.117"
+serde_json = "1.0.60"
+dotenv = "0.15.0"
+futures = "0.3"
+listenfd = "0.3.3"
+anyhow = "1.0.34"
+sqlx = { version = "0.4.1", features = [ "mysql", "runtime-actix-native-tls" ] }
