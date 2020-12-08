@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 use sqlx::mysql::MySqlPool;
 use sqlx::FromRow;
 
+use crate::common::P;
+
 #[derive(Serialize, Deserialize, FromRow)]
 pub struct Video {
     pub id: u32,
@@ -39,7 +41,10 @@ impl Video {
         })
     }
 
-    pub async fn find_all(page: u8, size: u8, pool: &MySqlPool) -> Result<Vec<Video>> {
+    pub async fn find_by_page(page: u8, size: u8, pool: &MySqlPool) -> Result<P<Video>> {
+        let count = sqlx::query!("SELECT COUNT(1) as count FROM video")
+            .fetch_one(pool)
+            .await?;
         let mut videos = vec![];
 
         let offset = (page - 1) * size;
@@ -61,6 +66,6 @@ impl Video {
             });
         }
 
-        Ok(videos)
+        Ok(P::new(count.count, videos))
     }
 }

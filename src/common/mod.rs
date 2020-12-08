@@ -1,1 +1,3 @@
-pub mod p;
+mod res;
+
+pub use res::P;

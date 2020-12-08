@@ -8,6 +8,7 @@ use std::env;
 mod controller;
 mod model;
 mod router;
+mod common;
 
 #[actix_web::main]
 async fn main() -> Result<()> {
