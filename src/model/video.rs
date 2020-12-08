@@ -41,16 +41,18 @@ impl Video {
         })
     }
 
-    pub async fn find_by_page(page: u8, size: u8, pool: &MySqlPool) -> Result<P<Video>> {
-        let count = sqlx::query!("SELECT COUNT(1) as count FROM video")
-            .fetch_one(pool)
-            .await?;
+    pub async fn find_page(page: u8, size: u8, pool: &MySqlPool) -> Result<P<Video>> {
         let mut videos = vec![];
 
         let offset = (page - 1) * size;
 
         let recs = sqlx::query!(
-            "SELECT id, cover, title, url FROM video ORDER BY id DESC LIMIT ?,?",
+            r#"
+                SELECT id, cover, title, url 
+                FROM video 
+                ORDER BY id DESC 
+                LIMIT ?,?
+            "#,
             offset,
             size
         )
@@ -66,6 +68,104 @@ impl Video {
             });
         }
 
-        Ok(P::new(count.count, videos))
+        Ok(P::new(Video::count("", 0, pool).await?, videos))
+    }
+
+    pub async fn find_page_by_catgory(
+        catgory: u8,
+        page: u8,
+        size: u8,
+        pool: &MySqlPool,
+    ) -> Result<P<Video>> {
+        let mut videos = vec![];
+
+        let offset = (page - 1) * size;
+
+        let recs = sqlx::query!(
+            r#"
+                SELECT id, cover, title, url, catgory 
+                FROM video 
+                WHERE catgory = ? 
+                ORDER BY id DESC 
+                LIMIT ?,?
+            "#,
+            catgory,
+            offset,
+            size
+        )
+        .fetch_all(pool)
+        .await?;
+
+        for rec in recs {
+            videos.push(Video {
+                id: rec.id,
+                cover: rec.cover,
+                title: rec.title,
+                url: rec.url,
+            });
+        }
+
+        Ok(P::new(Video::count("", catgory, pool).await?, videos))
+    }
+
+    pub async fn find_page_by_search(
+        search: &str,
+        page: u8,
+        size: u8,
+        pool: &MySqlPool,
+    ) -> Result<P<Video>> {
+        let mut videos = vec![];
+
+        let offset = (page - 1) * size;
+
+        let recs = sqlx::query!(
+            r#"
+                SELECT id, cover, title, url 
+                FROM video 
+                WHERE title LIKE %?% 
+                ORDER BY id DESC 
+                LIMIT ?,?
+            "#,
+            search,
+            offset,
+            size
+        )
+        .fetch_all(pool)
+        .await?;
+
+        for rec in recs {
+            videos.push(Video {
+                id: rec.id,
+                cover: rec.cover,
+                title: rec.title,
+                url: rec.url,
+            });
+        }
+
+        Ok(P::new(Video::count(search, 0, pool).await?, videos))
+    }
+
+    async fn count(search: &str, catgory: u8, pool: &MySqlPool) -> Result<i64> {
+        if "" == search {
+            if 0 == catgory {
+                let count = sqlx::query!("SELECT COUNT(1) as count FROM video")
+                    .fetch_one(pool)
+                    .await?;
+                Ok(count.count)
+            } else {
+                let count = sqlx::query!(
+                    "SELECT COUNT(1) as count FROM video WHERE catgory = ?",
+                    catgory
+                )
+                .fetch_one(pool)
+                .await?;
+                Ok(count.count)
+            }
+        } else {
+            let count = sqlx::query!("SELECT COUNT(1) as count FROM video WHERE title LIKE ?")
+                .fetch_one(pool)
+                .await?;
+            Ok(count.count)
+        }
     }
 }
