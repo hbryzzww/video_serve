@@ -47,12 +47,7 @@ impl Video {
         let offset = (page - 1) * size;
 
         let recs = sqlx::query!(
-            r#"
-                SELECT id, cover, title, url 
-                FROM video 
-                ORDER BY id DESC 
-                LIMIT ?,?
-            "#,
+            "SELECT id, cover, title, url FROM video ORDER BY id DESC LIMIT ?,?",
             offset,
             size
         )
@@ -82,13 +77,7 @@ impl Video {
         let offset = (page - 1) * size;
 
         let recs = sqlx::query!(
-            r#"
-                SELECT id, cover, title, url, catgory 
-                FROM video 
-                WHERE catgory = ? 
-                ORDER BY id DESC 
-                LIMIT ?,?
-            "#,
+            "SELECT id, cover, title, url, catgory FROM video WHERE catgory = ? ORDER BY id DESC LIMIT ?,?",
             catgory,
             offset,
             size
@@ -119,13 +108,7 @@ impl Video {
         let offset = (page - 1) * size;
 
         let recs = sqlx::query!(
-            r#"
-                SELECT id, cover, title, url 
-                FROM video 
-                WHERE title LIKE %?% 
-                ORDER BY id DESC 
-                LIMIT ?,?
-            "#,
+            "SELECT id, cover, title, url FROM video WHERE title LIKE ? ORDER BY id DESC LIMIT ?,?",
             search,
             offset,
             size
@@ -162,9 +145,12 @@ impl Video {
                 Ok(count.count)
             }
         } else {
-            let count = sqlx::query!("SELECT COUNT(1) as count FROM video WHERE title LIKE ?")
-                .fetch_one(pool)
-                .await?;
+            let count = sqlx::query!(
+                "SELECT COUNT(1) as count FROM video WHERE title LIKE ?",
+                search
+            )
+            .fetch_one(pool)
+            .await?;
             Ok(count.count)
         }
     }

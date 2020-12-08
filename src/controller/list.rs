@@ -1,6 +1,8 @@
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder};
 
-use crate::model::video::Video;
+use crate::common::Search;
+use crate::model::Video;
+
 use sqlx::mysql::MySqlPool;
 
 #[get("/videos")]
@@ -40,16 +42,17 @@ pub async fn catgory(req: HttpRequest, pool: web::Data<MySqlPool>) -> impl Respo
     }
 }
 
-#[get("/videos/search/{page}/{size}")]
+#[get("/search/{page}/{size}")]
 pub async fn search(
     req: HttpRequest,
-    search: web::Query<String>,
+    search: web::Query<Search>,
     pool: web::Data<MySqlPool>,
 ) -> impl Responder {
     let page: u8 = req.match_info().query("page").parse().unwrap();
     let size: u8 = req.match_info().query("size").parse().unwrap();
-
-    let res = Video::find_page_by_search(&search, page, size, pool.get_ref()).await;
+    let res =
+        Video::find_page_by_search(&format!("%{}%", search.keyword), page, size, pool.get_ref())
+            .await;
 
     match res {
         Ok(data) => HttpResponse::Ok().json(data),

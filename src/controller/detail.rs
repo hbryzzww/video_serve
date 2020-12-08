@@ -1,4 +1,4 @@
-use crate::model::video::Video;
+use crate::model::Video;
 
 use actix_web::{get, web, HttpRequest, HttpResponse, Responder};
 use sqlx::mysql::MySqlPool;
